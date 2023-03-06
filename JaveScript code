@@ -1,0 +1,133 @@
+var GeneticAlgorithm = function () {};
+
+GeneticAlgorithm.prototype.generate = function(length) {
+  let binaryStr = '';
+    while (binaryStr.length < length) {
+      binaryStr += Math.round(Math.random());
+    }
+  return binaryStr;
+};
+
+GeneticAlgorithm.prototype.select = function(population, fitnesses) {
+  // TODO: Implement the select method
+  let sum = fitnesses.reduce((acc, cur) => acc + cur);
+  let totalProb1 = 0;
+  let totalProb2 = 0;
+  let n = 0;
+  let m = 0;
+  let probabilities = [];
+  let selection1 = Math.random();
+  let selection2 = Math.random();
+  for (let i = 0; i < population.length; i ++) {
+    probabilities.push(fitnesses[i]/sum);
+  }
+  while (totalProb1 < selection1) {
+      totalProb1+=probabilities[n];
+      n++;
+    }
+
+    while (totalProb2 < selection2) {
+      totalProb2+=probabilities[m];
+      m++;
+    }
+  let chromosome1 = population[m-1];
+  let chromosome2 = population[n-1];
+
+  return [chromosome1, chromosome2];
+};
+
+GeneticAlgorithm.prototype.mutate = function(chromosome, p) {
+  // TODO: Implement the mutate method
+
+
+  let mut  = '';
+  
+  for (let i = 0; i < chromosome.length; i++) {
+    if (Math.random() < p) {
+      if (chromosome[i] == '1') {
+        mut += '0';
+      } else {
+        mut += '1';
+      }
+    } else {
+      mut += chromosome[i];
+      }
+  }
+  return mut;
+};
+
+GeneticAlgorithm.prototype.crossover = function(chromosome1, chromosome2) {
+  // TODO: Implement the crossover method
+//  console.log(chromosome1, chromosome2, chromosome1.length, chromosome2.length)
+  let length = chromosome1.length
+  let r = Math.round(Math.random()*length);
+  let crossChrom1 = chromosome1.substr(0, r)+chromosome2.substr(r,chromosome2.length-r);
+//  console.log(r, crossChrom1, crossChrom1.length);
+  let crossChrom2 = chromosome2.substr(0, r)+chromosome1.substr(r,chromosome1.length-r);
+//  console.log(r, crossChrom2, crossChrom2.length);
+  return [crossChrom1,crossChrom2];
+};
+
+GeneticAlgorithm.prototype.run = function(fitness, length, p_c, p_m, iterations) {
+
+  let t = 100; //number of times to run the RUN method
+  let popLength = 100; //size of the population
+  let population = [];
+  let fitArr = [];
+  let nextGen = [];
+  
+  //create the population with GENERATE
+    while (population.length < popLength) {
+      population.push(GeneticAlgorithm.prototype.generate(length));
+    }
+  
+  //create the fitness array
+    population.forEach (element => {fitArr.push(fitness(element));})
+  
+    for (let i = 0; i < t; i++) {
+//      console.log(fitArr.reduce((a,e) => a+e,0)/fitArr.length)
+
+      //create the nextGen
+        while (nextGen.length < popLength) {
+
+      //run SELECT method to grab two chromosomes
+        let chromosome1 = GeneticAlgorithm.prototype.select(population, fitArr)[0]
+
+        let chromosome2 = GeneticAlgorithm.prototype.select(population, fitArr)[1]
+
+      //decide if CROSSOVER needs to be run -- if so, run it
+      //run MUTATE on all chromosomes and push into nextGen array
+        let rand = Math.random();
+        if (rand < p_c) {
+          nextGen.push(this.mutate(GeneticAlgorithm.prototype.crossover(chromosome1, chromosome2)[0], p_m));
+          nextGen.push(GeneticAlgorithm.prototype.mutate(GeneticAlgorithm.prototype.crossover(chromosome1, chromosome2)[1], p_m));
+        } else {
+          nextGen.push(GeneticAlgorithm.prototype.mutate(chromosome1));
+          nextGen.push(GeneticAlgorithm.prototype.mutate(chromosome2));
+        }
+      }
+      
+  //make a new fitness array for the next generation 
+  fitArr = []
+  nextGen.forEach(element => {fitArr.push(fitness(element));}) 
+  //console.log(fitArr)
+      
+  //reassign the orginal population with the next generation
+  population = nextGen;
+  
+  //clear the next generation bucket
+  nextGen = [];
+  
+  }
+  
+  //find the highest fitness number and its index
+  let highFit = Math.max(...fitArr)
+//  console.log(fitArr)
+  let idx = fitArr.indexOf(highFit)
+  //console.log(idx)
+  
+  //find the chromosome that is at the same index
+  
+  
+  return population[idx]
+};
